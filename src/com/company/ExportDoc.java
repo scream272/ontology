@@ -67,9 +67,14 @@ public class ExportDoc {
                         entryList.add(tmpEntry);
                     }
                 }
-//                if (num >= 10) {
-//                    return;
-//                }
+            }
+            for (int i = 1; i < entryList.size(); i++) {
+                for (int j = 1; j <= Entry.attrCount; j++) {
+                    if (entryList.get(i).getNumAttr(j).equals("")) {
+                        entryList.get(i).setNumAttr(j, entryList.get(i - 1).getNumAttr(j));
+                    }
+                }
+
             }
         }catch(Exception e){
             e.printStackTrace();

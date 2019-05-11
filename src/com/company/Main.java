@@ -1,4 +1,5 @@
 package com.company;
+import com.company.word.TfIdfCounter;
 import com.google.gson.*;
 import com.hankcs.hanlp.HanLP;
 import com.hankcs.hanlp.seg.common.Term;
@@ -7,7 +8,11 @@ import com.hankcs.hanlp.tokenizer.StandardTokenizer;
 import com.hankcs.hanlp.summary.TextRankKeyword;
 
 import java.io.*;
+import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
+
 import com.company.word.NewWordDiscover;
 
 /**
@@ -30,6 +35,8 @@ public class Main {
 //        System.out.println(tk.getKeywords(convertRawDataToJson(rawDataPath), 10));
 //        NewWordDiscover wd = new NewWordDiscover();
 //        System.out.println(wd.discover(jsonPath, 3));
+        TfIdfCounter tflc = new TfIdfCounter();
+        System.out.println(tflc.getKeywordsWithTfIdf("反应器超温，泄漏，遇点火源引发火灾爆炸，人员中毒伤亡", 4));
     }
     static private String convertRawDataToJson(String infilePath) {
         try {
@@ -88,17 +95,24 @@ public class Main {
         }
         return result;
     }
-    static private String SelectImportantWord(String data) {
-        NewWordDiscover wd = new NewWordDiscover();
-        String result = wd.discover(data, 3).toString();
-        System.out.println(result);
+
+    static private List<String> SelectImportantWord(String data, int size) {
+        List<String> result = new ArrayList<String>();
+        TfIdfCounter tflc = new TfIdfCounter();
+        for (Iterator<Map.Entry<String, Double>> iter = tflc.getKeywordsWithTfIdf(data, size).iterator(); iter.hasNext();) {
+            Map.Entry<String, Double> entry = iter.next();
+            result.add(entry.getKey());
+        }
         return result;
     }
+
     public static void main(String[] args) {
-        // convertRawDataToJson(rawDataPath);
+        convertRawDataToJson(rawDataPath);
         String dataStr = mergeJsonValueIntoString(jsonPath);
-        SelectImportantWord(dataStr);
-        testFunctinos();
+        List<String> importantWords = SelectImportantWord(dataStr, 20);
+        System.out.println(importantWords);
+        // testFunctinos();
+        //file_process();
     }
 
 }

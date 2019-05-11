@@ -11,10 +11,13 @@
 package com.company.word;
 
 import com.hankcs.hanlp.algorithm.MaxHeap;
+import com.hankcs.hanlp.corpus.document.sentence.Sentence;
 import com.hankcs.hanlp.mining.word.TfIdf;
 import com.hankcs.hanlp.seg.Segment;
 import com.hankcs.hanlp.seg.common.Term;
 import com.hankcs.hanlp.summary.KeywordExtractor;
+import com.hankcs.hanlp.tokenizer.NLPTokenizer;
+import com.hankcs.hanlp.tokenizer.NotionalTokenizer;
 import com.hankcs.hanlp.tokenizer.StandardTokenizer;
 
 import java.util.*;
@@ -38,7 +41,7 @@ public class TfIdfCounter extends KeywordExtractor
 
     public TfIdfCounter(boolean filterStopWord)
     {
-        this(StandardTokenizer.SEGMENT, filterStopWord);
+        this(NotionalTokenizer.SEGMENT, filterStopWord);
     }
 
     public TfIdfCounter(Segment defaultSegment, boolean filterStopWord)
@@ -77,14 +80,14 @@ public class TfIdfCounter extends KeywordExtractor
         if (idf == null)
             compute();
 
-        Map<String, Double> tfIdf = com.hankcs.hanlp.mining.word.TfIdf.tfIdf(com.hankcs.hanlp.mining.word.TfIdf.tf(convert(termList)), idf);
+        Map<String, Double> tfIdf = TfIdf.tfIdf(TfIdf.tf(convert(termList)), idf);
         return topN(tfIdf, size);
     }
 
     public void add(Object id, List<Term> termList)
     {
         List<String> words = convert(termList);
-        Map<String, Double> tf = com.hankcs.hanlp.mining.word.TfIdf.tf(words);
+        Map<String, Double> tf = TfIdf.tf(words);
         tfMap.put(id, tf);
         idf = null;
     }
@@ -115,13 +118,24 @@ public class TfIdfCounter extends KeywordExtractor
         List<Term> termList = preprocess(text);
         add(id, termList);
     }
-
+    protected void myfilter(List<Term> termList)
+    {
+        ListIterator<Term> listIterator = termList.listIterator();
+        while (listIterator.hasNext())
+        {
+            Term t = listIterator.next();
+            // 如果Term属于停用词或者Term仅仅是一个字符，则删除
+            if (!shouldInclude(t) || t.word.length() == 1)
+                listIterator.remove();
+        }
+    }
     private List<Term> preprocess(String text)
     {
-        List<Term> termList = defaultSegment.seg(text);
+        // List<Term> termList = defaultSegment.seg(text);
+        List<Term> termList = NLPTokenizer.segment(text);
         if (filterStopWord)
         {
-            filter(termList);
+            myfilter(termList);
         }
         return termList;
     }
@@ -140,7 +154,7 @@ public class TfIdfCounter extends KeywordExtractor
 
     public Map<Object, Map<String, Double>> compute()
     {
-        idf = com.hankcs.hanlp.mining.word.TfIdf.idfFromTfs(tfMap.values());
+        idf = TfIdf.idfFromTfs(tfMap.values());
         tfidfMap = new HashMap<Object, Map<String, Double>>(idf.size());
         for (Map.Entry<Object, Map<String, Double>> entry : tfMap.entrySet())
         {

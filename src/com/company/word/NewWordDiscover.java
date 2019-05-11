@@ -25,7 +25,7 @@ public class NewWordDiscover
 
     public NewWordDiscover()
     {
-        this(4, 0.00005f, .4f, 1.2f, false);
+        this(10, 0.00005f, .4f, 1.2f, false);
     }
 
     /**
