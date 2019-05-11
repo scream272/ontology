@@ -1,21 +1,11 @@
 package com.company;
 import com.company.word.TfIdfCounter;
 import com.google.gson.*;
-import com.hankcs.hanlp.HanLP;
 import com.hankcs.hanlp.corpus.tag.Nature;
-import com.hankcs.hanlp.seg.common.Term;
-import com.hankcs.hanlp.tokenizer.NLPTokenizer;
-import com.hankcs.hanlp.tokenizer.StandardTokenizer;
-import com.hankcs.hanlp.summary.TextRankKeyword;
 
 import java.io.*;
-import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 
-import com.company.word.NewWordDiscover;
-import org.apache.poi.ss.formula.functions.T;
 
 /**
  *
@@ -102,13 +92,28 @@ public class Main {
     }
 
     public static void main(String[] args) {
+        // 步骤1：首先将原始的文档进行处理，将文档中的表格转换为json文件
         convertRawDataToJson(rawDataPath);
+
+        // 步骤2：将json文件合并成一个总的字符串，方便提取关键词
         String dataStr = mergeJsonValueIntoString(jsonPath);
-        TfIdfCounter tfic = new TfIdfCounter();
-        System.out.println(tfic.getSpecialTerms(dataStr));
-         List<String> importantWords = SelectImportantWord(dataStr, 100, Nature.v);
-         System.out.println(importantWords);
+
+        // 步骤3：关键词抽取，按照词性来进行
+        List<String> vWords = SelectImportantWord(dataStr, 100, Nature.v);
+        List<String> nWords = SelectImportantWord(dataStr, 1000, Nature.n);
+        System.out.println(vWords);
+        System.out.println(nWords);
+
+        // 步骤4：分析json文档，构造步骤3中的关键词的多元组
         testFunctinos();
+
+        // 步骤5：利用步骤3与步骤4的输出结果建立关系图
+
+        // 步骤6：在关系图的基础上建立原始文档的倒排索引
+
+        // 步骤7：利用关系图与倒排索引进行本体构建
+
+        // 步骤8：本体的使用Demo
         //file_process();
     }
 
