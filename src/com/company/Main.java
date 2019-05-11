@@ -2,6 +2,7 @@ package com.company;
 import com.company.word.TfIdfCounter;
 import com.google.gson.*;
 import com.hankcs.hanlp.HanLP;
+import com.hankcs.hanlp.corpus.tag.Nature;
 import com.hankcs.hanlp.seg.common.Term;
 import com.hankcs.hanlp.tokenizer.NLPTokenizer;
 import com.hankcs.hanlp.tokenizer.StandardTokenizer;
@@ -14,6 +15,7 @@ import java.util.List;
 import java.util.Map;
 
 import com.company.word.NewWordDiscover;
+import org.apache.poi.ss.formula.functions.T;
 
 /**
  *
@@ -35,8 +37,6 @@ public class Main {
 //        System.out.println(tk.getKeywords(convertRawDataToJson(rawDataPath), 10));
 //        NewWordDiscover wd = new NewWordDiscover();
 //        System.out.println(wd.discover(jsonPath, 3));
-        TfIdfCounter tflc = new TfIdfCounter();
-        System.out.println(tflc.getKeywordsWithTfIdf("反应器超温，泄漏，遇点火源引发火灾爆炸，人员中毒伤亡", 4));
     }
     static private String convertRawDataToJson(String infilePath) {
         try {
@@ -96,22 +96,19 @@ public class Main {
         return result;
     }
 
-    static private List<String> SelectImportantWord(String data, int size) {
-        List<String> result = new ArrayList<String>();
+    static private List<String> SelectImportantWord(String data, int size, Nature na) {
         TfIdfCounter tflc = new TfIdfCounter();
-        for (Iterator<Map.Entry<String, Double>> iter = tflc.getKeywordsWithTfIdf(data, size).iterator(); iter.hasNext();) {
-            Map.Entry<String, Double> entry = iter.next();
-            result.add(entry.getKey());
-        }
-        return result;
+        return tflc.getKeywordsWithTfIdf(data, size, na);
     }
 
     public static void main(String[] args) {
         convertRawDataToJson(rawDataPath);
         String dataStr = mergeJsonValueIntoString(jsonPath);
-        List<String> importantWords = SelectImportantWord(dataStr, 20);
-        System.out.println(importantWords);
-        // testFunctinos();
+        TfIdfCounter tfic = new TfIdfCounter();
+        System.out.println(tfic.getSpecialTerms(dataStr));
+         List<String> importantWords = SelectImportantWord(dataStr, 100, Nature.v);
+         System.out.println(importantWords);
+        testFunctinos();
         //file_process();
     }
 

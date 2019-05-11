@@ -12,7 +12,7 @@ package com.company.word;
 
 import com.hankcs.hanlp.algorithm.MaxHeap;
 import com.hankcs.hanlp.corpus.document.sentence.Sentence;
-import com.hankcs.hanlp.mining.word.TfIdf;
+import com.hankcs.hanlp.corpus.tag.Nature;
 import com.hankcs.hanlp.seg.Segment;
 import com.hankcs.hanlp.seg.common.Term;
 import com.hankcs.hanlp.summary.KeywordExtractor;
@@ -21,6 +21,8 @@ import com.hankcs.hanlp.tokenizer.NotionalTokenizer;
 import com.hankcs.hanlp.tokenizer.StandardTokenizer;
 
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * TF-IDF统计工具兼关键词提取工具
@@ -59,29 +61,27 @@ public class TfIdfCounter extends KeywordExtractor
     @Override
     public List<String> getKeywords(List<Term> termList, int size)
     {
-        List<Map.Entry<String, Double>> entryList = getKeywordsWithTfIdf(termList, size);
-        List<String> r = new ArrayList<String>(entryList.size());
-        for (Map.Entry<String, Double> entry : entryList)
-        {
-            r.add(entry.getKey());
-        }
-
-        return r;
+        return getKeywordsWithTfIdf(termList, size);
     }
 
-    public List<Map.Entry<String, Double>> getKeywordsWithTfIdf(String document, int size)
+    public List<String> getKeywordsWithTfIdf(String document, int size, Nature na)
     {
-        return getKeywordsWithTfIdf(preprocess(document), size);
+        return getKeywordsWithTfIdf(preprocess(document, na), size);
     }
 
 
-    public List<Map.Entry<String, Double>> getKeywordsWithTfIdf(List<Term> termList, int size)
+    public List<String> getKeywordsWithTfIdf(List<Term> termList, int size)
     {
+        List<String> result = new ArrayList<>();
         if (idf == null)
             compute();
 
         Map<String, Double> tfIdf = TfIdf.tfIdf(TfIdf.tf(convert(termList)), idf);
-        return topN(tfIdf, size);
+        List<Map.Entry<String, Double>> tpn = topN(tfIdf, size);
+        for (int i = 0; i < tpn.size(); i++) {
+            result.add(tpn.get(i).getKey());
+        }
+        return result;
     }
 
     public void add(Object id, List<Term> termList)
@@ -107,49 +107,39 @@ public class TfIdfCounter extends KeywordExtractor
         add(tfMap.size(), termList);
     }
 
-    /**
-     * 添加文档
-     *
-     * @param id   文档id
-     * @param text 文档内容
-     */
-    public void add(Object id, String text)
-    {
-        List<Term> termList = preprocess(text);
-        add(id, termList);
-    }
-    protected void myfilter(List<Term> termList)
+    protected void myfilter(List<Term> termList, Nature na)
     {
         ListIterator<Term> listIterator = termList.listIterator();
         while (listIterator.hasNext())
         {
             Term t = listIterator.next();
             // 如果Term属于停用词或者Term仅仅是一个字符，则删除
-            if (!shouldInclude(t) || t.word.length() == 1)
+            if (!shouldInclude(t) || t.word.length() == 1 || t.nature != na)
                 listIterator.remove();
         }
     }
-    private List<Term> preprocess(String text)
+
+
+    public List<Term> getSpecialTerms(String s) {
+
+        List<Term> strs = new ArrayList<>();
+        Pattern p = Pattern.compile("[A-Za-z]+-[A-Za-z0-9]+/?[A-Za-z0-9]*");
+        Matcher m = p.matcher(s);
+        while (m.find()) {
+            strs.add(new Term(m.group().replace(" ",""), Nature.n));
+        }
+        Set<Term> set = new HashSet<>(strs);
+        return new ArrayList<>(set);
+    }
+    private List<Term> preprocess(String text, Nature na)
     {
-        // List<Term> termList = defaultSegment.seg(text);
         List<Term> termList = NLPTokenizer.segment(text);
+        termList.addAll(getSpecialTerms(text));
         if (filterStopWord)
         {
-            myfilter(termList);
+            myfilter(termList, na);
         }
         return termList;
-    }
-
-    /**
-     * 添加文档，自动分配id
-     *
-     * @param text
-     */
-    public int add(String text)
-    {
-        int id = tfMap.size();
-        add(id, text);
-        return id;
     }
 
     public Map<Object, Map<String, Double>> compute()
