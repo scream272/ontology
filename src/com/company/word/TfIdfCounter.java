@@ -228,8 +228,7 @@ public class TfIdfCounter extends KeywordExtractor
     private static List<Map.Entry<String, Double>> sort(Map<String, Double> map)
     {
         List<Map.Entry<String, Double>> list = new ArrayList<Map.Entry<String, Double>>(map.entrySet());
-        Collections.sort(list, new Comparator<Map.Entry<String, Double>>()
-        {
+        Collections.sort(list, new Comparator<Map.Entry<String, Double>>() {
             @Override
             public int compare(Map.Entry<String, Double> o1, Map.Entry<String, Double> o2)
             {

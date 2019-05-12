@@ -24,7 +24,7 @@ public class ExportDoc {
      * @param filePath
      */
     static private int entryStartNum = 7;
-    ArrayList<Entry> entryList = new ArrayList<Entry>();
+    ArrayList<Entry> entryList = new ArrayList<>();
     public void parseDoc(String filePath){
         try{
             FileInputStream in = new FileInputStream(filePath);//载入文档
@@ -56,7 +56,6 @@ public class ExportDoc {
                         }
                         if (s.equals("神华宁煤400万吨/年煤间接液化油品合成HAZOP安全评价项目会议记录表")) {
                             is_node = true;
-                            System.out.println("这是第" + num + "个表的数据");
                             num += 1;
                         }
                         if (is_node && tmpEntry != null && j >= 1) {
@@ -68,6 +67,8 @@ public class ExportDoc {
                     }
                 }
             }
+            if (num >= 20)
+                return;
             for (int i = 1; i < entryList.size(); i++) {
                 for (int j = 1; j <= Entry.attrCount; j++) {
                     if (entryList.get(i).getNumAttr(j).equals("")) {

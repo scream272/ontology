@@ -3,7 +3,11 @@ import com.company.word.TfIdfCounter;
 import com.google.gson.*;
 import com.hankcs.hanlp.corpus.tag.Nature;
 
+import javax.xml.stream.events.EntityReference;
 import java.io.*;
+import java.lang.reflect.Array;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 
@@ -16,7 +20,9 @@ import java.util.List;
 public class Main {
     static private String rawDataPath = "C:\\Users\\clh\\IdeaProjects\\ontology\\resource\\神华项目报告-中科.doc";
     static private String jsonPath = "C:\\Users\\clh\\IdeaProjects\\ontology\\data\\phase1_data.json";
-
+    static private List<String> causeDict;
+    static private JsonParser jsonParser;
+    static private ArrayList<Entry> entryList;
     static private void testFunctinos() {
 //        List<Term> termList = StandardTokenizer.segment("反应器超温，泄漏，遇点火源引发火灾爆炸，人员中毒伤亡");
 //        System.out.println(termList);
@@ -28,10 +34,10 @@ public class Main {
 //        NewWordDiscover wd = new NewWordDiscover();
 //        System.out.println(wd.discover(jsonPath, 3));
     }
-    static private String convertRawDataToJson(String infilePath) {
+    static private String convertRawDataToJson(String infilePath, String outfilePath) {
         try {
-            File outfile = new File(infilePath);
-            if (outfile.exists()) { // 如果已存在,删除旧文件
+            File outfile = new File(outfilePath);
+            if (outfile.exists()) { // 如果已存在,直接读取
                 FileReader reader = new FileReader(outfile);//定义一个fileReader对象，用来初始化BufferedReader
                 BufferedReader bReader = new BufferedReader(reader);//new一个BufferedReader对象，将文件内容读取到缓存
                 StringBuilder sb = new StringBuilder();//定义一个字符串缓存，将字符串存放缓存中
@@ -52,6 +58,7 @@ public class Main {
             write.write(gson.toJson(doc.entryList));
             write.flush();
             write.close();
+            entryList = doc.entryList;
             return gson.toJson(doc.entryList);
         }
         catch (Exception e) {
@@ -60,12 +67,10 @@ public class Main {
         return null;
     }
 
-    static private String mergeJsonValueIntoString(String infilePath) {
-        JsonParser parse =new JsonParser();  //创建json解析器
+    static private String mergeJsonValueIntoString(String data) {
         String result = "";
         try {
-            JsonArray ja = (JsonArray) parse.parse(new FileReader(infilePath));  //创建jsonObject对象
-
+            JsonArray ja = (JsonArray) jsonParser.parse(data);  //创建jsonObject对象
             for (JsonElement entry : ja) {
                 JsonObject jo = (JsonObject) entry;
                 result = result + jo.get("para");
@@ -77,26 +82,69 @@ public class Main {
                 result = result + jo.get("possibiliy");
                 result = result + jo.get("level");
                 result = result + jo.get("suggestion");
+                entryList.add(new Entry(jo.get("para").toString(), jo.get("bias").toString(), jo.get("conseq").toString(),
+                                        jo.get("cause").toString(), jo.get("protection").toString(),jo.get("severity").toString(),
+                                        jo.get("possibiliy").toString(), jo.get("level").toString(), jo.get("suggestion").toString()));
             }
         } catch (JsonIOException e) {
-            e.printStackTrace();
-        } catch (FileNotFoundException e) {
             e.printStackTrace();
         }
         return result;
     }
 
     static private List<String> SelectImportantWord(String data, int size, Nature na) {
+        List<String> result = new ArrayList<>();
+        File wordCache = new File("C:\\Users\\clh\\IdeaProjects\\ontology\\data\\Important_" +
+                                na.toString() +
+                                size);
+        // 如果发现之前有缓存好的结果，则直接取出
+        if (wordCache.exists()) {
+            FileReader reader = null;//定义一个fileReader对象，用来初始化BufferedReader
+            try {
+                reader = new FileReader(wordCache);
+                BufferedReader bReader = new BufferedReader(reader);//new一个BufferedReader对象，将文件内容读取到缓存
+                String s = "";
+                while ((s = bReader.readLine()) != null) {//逐行读取文件内容，不读取换行符和末尾的空格
+                    result.add(s);
+                }
+                bReader.close();
+                return result;
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
+        // 如果没有找到已经缓存的结果，则重新筛选
         TfIdfCounter tflc = new TfIdfCounter();
-        return tflc.getKeywordsWithTfIdf(data, size, na);
+        result = tflc.getKeywordsWithTfIdf(data, size, na);
+        try {
+            wordCache.createNewFile();
+            Writer write = new OutputStreamWriter(new FileOutputStream(wordCache), "UTF-8");
+            for (String r: result) {
+                write.write(r + "\n");
+            }
+            write.flush();
+            write.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return result;
     }
 
+    static private void envInit() {
+        jsonParser = new JsonParser();  //创建json解析器
+        causeDict = Arrays.asList("造成", "引起", "引发");
+        entryList = new ArrayList<>();
+    }
     public static void main(String[] args) {
+        envInit();
         // 步骤1：首先将原始的文档进行处理，将文档中的表格转换为json文件
-        convertRawDataToJson(rawDataPath);
+        String dataJson = convertRawDataToJson(rawDataPath, jsonPath);
 
-        // 步骤2：将json文件合并成一个总的字符串，方便提取关键词
-        String dataStr = mergeJsonValueIntoString(jsonPath);
+        // 步骤2：将json的value值合并成一个总的字符串，方便提取关键词
+        String dataStr = mergeJsonValueIntoString(dataJson);
 
         // 步骤3：关键词抽取，按照词性来进行
         List<String> vWords = SelectImportantWord(dataStr, 100, Nature.v);
@@ -104,17 +152,19 @@ public class Main {
         System.out.println(vWords);
         System.out.println(nWords);
 
-        // 步骤4：分析json文档，构造步骤3中的关键词的多元组
-        testFunctinos();
-
+        // 步骤4：分析json文档，构造事件（三元组）
+        for (Entry entry : entryList) {
+            System.out.println(entry.getNumAttr(3));
+        }
         // 步骤5：利用步骤3与步骤4的输出结果建立关系图
 
-        // 步骤6：在关系图的基础上建立原始文档的倒排索引
+        // 步骤6：在关系图的基础上建立“后果”的倒排索引
 
         // 步骤7：利用关系图与倒排索引进行本体构建
 
         // 步骤8：本体的使用Demo
         //file_process();
+        testFunctinos();
     }
 
 }
