@@ -1,4 +1,5 @@
 package com.company;
+import com.company.IObject.Equipment;
 import com.company.utils.Entry;
 import com.company.utils.ExportDoc;
 import com.company.word.TfIdfCounter;
@@ -156,9 +157,9 @@ public class Main {
         System.out.println(vWords);
         System.out.println(nWords);
 
-        // 步骤4：分析json文档，构造Event、IObject、IOperation
+        // 步骤4：分析json文档，构造Event、IObject、IOperation三元表达
         for (Entry entry : entryList) {
-            System.out.println(entry.getNumAttr(3));
+            Equipment eq = Equipment.GetEquipment(entry.getNumAttr(1)); //TO 剥离器材与Attribute
         }
         // 步骤5：利用步骤3与步骤4的输出结果建立关系图
 

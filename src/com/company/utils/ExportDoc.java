@@ -44,7 +44,7 @@ public class ExportDoc {
                     Entry tmpEntry = null;
                     if (i >= entryStartNum) {
                         tmpEntry = new Entry("", "", "", "", "",
-                                            "", "", "", "");;
+                                            "", "", "", "");
                     }
                     //迭代列，默认从0开始
                     for (int j = 0; j < tr.numCells(); j++) {
@@ -59,7 +59,7 @@ public class ExportDoc {
                             num += 1;
                         }
                         if (is_node && tmpEntry != null && j >= 1) {
-                            tmpEntry.setNumAttr(j, s);
+                            tmpEntry.setNumAttr(j, s.replaceAll("\\s*", "").replace("　", ""));
                         }
                     }
                     if (tmpEntry != null && is_node) {
@@ -67,15 +67,13 @@ public class ExportDoc {
                     }
                 }
             }
-            if (num >= 20)
-                return;
+            System.out.println("fill the blank! for " + entryList.size());
             for (int i = 1; i < entryList.size(); i++) {
                 for (int j = 1; j <= Entry.attrCount; j++) {
                     if (entryList.get(i).getNumAttr(j).equals("")) {
                         entryList.get(i).setNumAttr(j, entryList.get(i - 1).getNumAttr(j));
                     }
                 }
-
             }
         }catch(Exception e){
             e.printStackTrace();
