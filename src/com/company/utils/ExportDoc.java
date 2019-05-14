@@ -1,10 +1,10 @@
-package com.company;
+package com.company.utils;
 
 import java.io.FileInputStream;
 import java.util.*;
 
+import com.company.utils.Entry;
 import org.apache.poi.hwpf.HWPFDocument;
-import org.apache.poi.hwpf.usermodel.Paragraph;
 import org.apache.poi.hwpf.usermodel.Range;
 import org.apache.poi.hwpf.usermodel.Table;
 import org.apache.poi.hwpf.usermodel.TableCell;
@@ -24,7 +24,7 @@ public class ExportDoc {
      * @param filePath
      */
     static private int entryStartNum = 7;
-    ArrayList<Entry> entryList = new ArrayList<>();
+    public ArrayList<Entry> entryList = new ArrayList<>();
     public void parseDoc(String filePath){
         try{
             FileInputStream in = new FileInputStream(filePath);//载入文档

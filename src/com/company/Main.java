@@ -1,11 +1,11 @@
 package com.company;
+import com.company.utils.Entry;
+import com.company.utils.ExportDoc;
 import com.company.word.TfIdfCounter;
 import com.google.gson.*;
 import com.hankcs.hanlp.corpus.tag.Nature;
 
-import javax.xml.stream.events.EntityReference;
 import java.io.*;
-import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -139,6 +139,10 @@ public class Main {
         entryList = new ArrayList<>();
     }
     public static void main(String[] args) {
+        /* 构造本体的作用：将文档进行结构化抽象，便于安全信息的传递、共享、查询
+        *  1. 对文档中出现的关键实验器材，进行全面的危险系数评估（从不当操作可能引发的后果来分析）；
+        *  2. 为实际生产过程中可能出现的危害，提供自动化故障处理建议；
+        *  3. 汇总生产过程中需要关注的事项，用于指导生产 */
         envInit();
         // 步骤1：首先将原始的文档进行处理，将文档中的表格转换为json文件
         String dataJson = convertRawDataToJson(rawDataPath, jsonPath);
@@ -152,7 +156,7 @@ public class Main {
         System.out.println(vWords);
         System.out.println(nWords);
 
-        // 步骤4：分析json文档，构造事件（三元组）
+        // 步骤4：分析json文档，构造Event、IObject、IOperation
         for (Entry entry : entryList) {
             System.out.println(entry.getNumAttr(3));
         }
