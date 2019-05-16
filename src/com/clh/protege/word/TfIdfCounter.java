@@ -8,17 +8,15 @@
  * This source is subject to Hankcs. Please contact Hankcs to get more information.
  * </copyright>
  */
-package com.company.word;
+package com.clh.protege.word;
 
 import com.hankcs.hanlp.algorithm.MaxHeap;
-import com.hankcs.hanlp.corpus.document.sentence.Sentence;
 import com.hankcs.hanlp.corpus.tag.Nature;
 import com.hankcs.hanlp.seg.Segment;
 import com.hankcs.hanlp.seg.common.Term;
 import com.hankcs.hanlp.summary.KeywordExtractor;
 import com.hankcs.hanlp.tokenizer.NLPTokenizer;
 import com.hankcs.hanlp.tokenizer.NotionalTokenizer;
-import com.hankcs.hanlp.tokenizer.StandardTokenizer;
 
 import java.util.*;
 import java.util.regex.Matcher;

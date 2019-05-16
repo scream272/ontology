@@ -1,4 +1,4 @@
-package com.company.word;
+package com.clh.protege.word;
 
 import java.util.Map;
 import java.util.TreeMap;

@@ -1,8 +1,8 @@
-package com.company;
-import com.company.IObject.Equipment;
-import com.company.utils.Entry;
-import com.company.utils.ExportDoc;
-import com.company.word.TfIdfCounter;
+package com.clh.protege;
+import com.clh.protege.protege.ConvertClassToOwl;
+import com.clh.protege.utils.Entry;
+import com.clh.protege.utils.ExportDoc;
+import com.clh.protege.word.TfIdfCounter;
 import com.google.gson.*;
 import com.hankcs.hanlp.corpus.tag.Nature;
 
@@ -93,7 +93,7 @@ public class Main {
         return result;
     }
 
-    static private List<String> SelectImportantWord(String data, int size, Nature na) {
+    static private List<String> selectImportantWord(String data, int size, Nature na) {
         List<String> result = new ArrayList<>();
         File wordCache = new File("C:\\Users\\clh\\IdeaProjects\\ontology\\data\\Important_" +
                                 na.toString() +
@@ -134,6 +134,10 @@ public class Main {
         return result;
     }
 
+    static private void buildProtegeOwl() {
+        ConvertClassToOwl conver = new ConvertClassToOwl();
+        conver.test();
+    }
     static private void envInit() {
         jsonParser = new JsonParser();  //创建json解析器
         causeDict = Arrays.asList("造成", "引起", "引发");
@@ -152,22 +156,22 @@ public class Main {
         String dataStr = mergeJsonValueIntoString(dataJson);
 
         // 步骤3：关键词抽取，按照词性来进行
-        List<String> vWords = SelectImportantWord(dataStr, 100, Nature.v);
-        List<String> nWords = SelectImportantWord(dataStr, 1000, Nature.n);
+        List<String> vWords = selectImportantWord(dataStr, 100, Nature.v);
+        List<String> nWords = selectImportantWord(dataStr, 1000, Nature.n);
         System.out.println(vWords);
         System.out.println(nWords);
 
-        // 步骤4：分析json文档，构造Event、IObject、IOperation三元表达
-        for (Entry entry : entryList) {
-            Equipment eq = Equipment.GetEquipment(entry.getNumAttr(1)); //TO 剥离器材与Attribute
-        }
+        // 步骤4：分析json文档，构造Event、iobject、IOperation三元表达
+//        for (Entry entry : entryList) {
+//            Equipment eq = Equipment.GetEquipment(entry.getNumAttr(1)); //TODO 剥离器材与Attribute
+//        }
         // 步骤5：利用步骤3与步骤4的输出结果建立关系图
 
         // 步骤6：在关系图的基础上建立“后果”的倒排索引
 
         // 步骤7：利用关系图与倒排索引进行本体构建
-
-        // 步骤8：本体的使用Demo
+        buildProtegeOwl();
+        // 步骤8：本体的使用
         //file_process();
         testFunctinos();
     }

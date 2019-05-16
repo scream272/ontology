@@ -1,4 +1,4 @@
-package com.company.utils;
+package com.clh.protege.utils;
 
 public class Entry {
     String para;

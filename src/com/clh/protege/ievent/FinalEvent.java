@@ -1,4 +1,4 @@
-package com.company.IEvent;
+package com.clh.protege.ievent;
 
 import java.util.List;
 

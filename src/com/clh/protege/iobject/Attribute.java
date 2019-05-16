@@ -1,4 +1,4 @@
-package com.company.IObject;
+package com.clh.protege.iobject;
 
 import java.util.ArrayList;
 

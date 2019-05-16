@@ -1,4 +1,4 @@
-package com.company.word;
+package com.clh.protege.word;
 
 import com.hankcs.hanlp.algorithm.MaxHeap;
 import com.hankcs.hanlp.utility.LexiconUtility;

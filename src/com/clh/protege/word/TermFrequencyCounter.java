@@ -8,7 +8,7 @@
  * This source is subject to Han He. Please contact Han He for more information.
  * </copyright>
  */
-package com.company.word;
+package com.clh.protege.word;
 
 import com.hankcs.hanlp.HanLP;
 import com.hankcs.hanlp.algorithm.MaxHeap;

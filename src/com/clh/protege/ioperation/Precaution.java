@@ -1,4 +1,4 @@
-package com.company.IOperation;
+package com.clh.protege.ioperation;
 
 public class Precaution extends IOperation{
 }

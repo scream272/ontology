@@ -1,9 +1,8 @@
-package com.company.utils;
+package com.clh.protege.utils;
 
 import java.io.FileInputStream;
 import java.util.*;
 
-import com.company.utils.Entry;
 import org.apache.poi.hwpf.HWPFDocument;
 import org.apache.poi.hwpf.usermodel.Range;
 import org.apache.poi.hwpf.usermodel.Table;

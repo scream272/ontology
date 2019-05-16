@@ -1,9 +1,8 @@
-package com.company.IObject;
+package com.clh.protege.iobject;
 
-import com.company.IEvent.FinalEvent;
-import com.company.IEvent.InitEvent;
-import com.company.IEvent.MiddleEvent;
-import org.apache.poi.ss.examples.AddDimensionedImage;
+import com.clh.protege.ievent.FinalEvent;
+import com.clh.protege.ievent.InitEvent;
+import com.clh.protege.ievent.MiddleEvent;
 
 import java.util.ArrayList;
 import java.util.HashMap;
