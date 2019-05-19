@@ -1,7 +1,10 @@
 package com.clh.protege;
-import com.clh.protege.protege.ConvertClassToOwl;
+import com.clh.protege.iobject.Attribute;
+import com.clh.protege.iobject.Equipment;
+import com.clh.protege.protege.OwlModel;
 import com.clh.protege.utils.Entry;
 import com.clh.protege.utils.ExportDoc;
+import com.clh.protege.utils.Log;
 import com.clh.protege.word.TfIdfCounter;
 import com.google.gson.*;
 import com.hankcs.hanlp.corpus.tag.Nature;
@@ -10,6 +13,8 @@ import java.io.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 
 /**
@@ -134,14 +139,35 @@ public class Main {
         return result;
     }
 
-    static private void buildProtegeOwl() {
-        ConvertClassToOwl conver = new ConvertClassToOwl();
-        conver.test();
+    static private void buildProtegeOwlFromEntryList(ArrayList<Entry> el, String resultPath) {
+        OwlModel om = new OwlModel();
+        om.convertClassToOwl(resultPath);
+    }
+
+    static private void buildEventObjectOperation(ArrayList<Entry> el) {
+        int count = 0;
+        for (Entry entry : el) {
+            Log.Debug(entry.getNumAttr(1));
+            String para = entry.getNumAttr(1); // 取出表格第一列的内容
+            Pattern p = Pattern.compile("[A-Za-z]+-[A-Za-z0-9]+/?[A-Za-z0-9]*");
+            Matcher m = p.matcher(para);
+            if (m.find()) {
+                count = count + 1;
+                if (count > 200)
+                    return;
+                String eqname = m.group();
+                Equipment eq = Equipment.GetEquipment(eqname);
+                String attrname = para.replace(eqname, "");
+                Attribute attr = eq.GetAttribute(attrname);
+                attr.AddBias(entry.getNumAttr(2));
+            }
+        }
     }
     static private void envInit() {
         jsonParser = new JsonParser();  //创建json解析器
         causeDict = Arrays.asList("造成", "引起", "引发");
         entryList = new ArrayList<>();
+        Log.loglevel = 3;
     }
     public static void main(String[] args) {
         /* 构造本体的作用：将文档进行结构化抽象，便于安全信息的传递、共享、查询
@@ -162,15 +188,14 @@ public class Main {
         System.out.println(nWords);
 
         // 步骤4：分析json文档，构造Event、iobject、IOperation三元表达
-//        for (Entry entry : entryList) {
-//            Equipment eq = Equipment.GetEquipment(entry.getNumAttr(1)); //TODO 剥离器材与Attribute
-//        }
+        buildEventObjectOperation(entryList);
+
         // 步骤5：利用步骤3与步骤4的输出结果建立关系图
 
         // 步骤6：在关系图的基础上建立“后果”的倒排索引
 
         // 步骤7：利用关系图与倒排索引进行本体构建
-        buildProtegeOwl();
+        buildProtegeOwlFromEntryList(entryList, "entrylist.owl");
         // 步骤8：本体的使用
         //file_process();
         testFunctinos();

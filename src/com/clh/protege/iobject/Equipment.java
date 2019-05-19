@@ -10,15 +10,15 @@ import java.util.List;
 /* 代表每种实验器材的参数（属性），比如
  * D-5761006*/
 public class Equipment extends IObject{
-    public List<Attribute> attributeList;
+    public HashMap<String, Attribute> attributeMap;
     public List<InitEvent> initEventList;
     public List<MiddleEvent> middleEventList;
     public List<FinalEvent> finalEventList; //代表危险
     public int riskScore;
-    public static HashMap<String, Equipment> allEquipMap;
+    public static HashMap<String, Equipment> allEquipMap = new HashMap<String, Equipment>();
     public Equipment(String name) {
         this.name = name;
-        this.attributeList = new ArrayList<>();
+        this.attributeMap = new HashMap<>();
         this.initEventList = new ArrayList<>();
         this.middleEventList = new ArrayList<>();
         this.finalEventList = new ArrayList<>();
@@ -29,7 +29,12 @@ public class Equipment extends IObject{
         Equipment eq = new Equipment(name);
         allEquipMap.put(name, eq);
         return eq;
-
-
+    }
+    public Attribute GetAttribute(String name) {
+        if (attributeMap.containsKey(name))
+            return attributeMap.get(name);
+        Attribute attr = new Attribute(name);
+        attributeMap.put(name, attr);
+        return attr;
     }
 }
