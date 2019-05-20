@@ -1,15 +1,15 @@
 package com.clh.protege.utils;
 
 public class Entry {
-    String para;
-    String bias;
-    String conseq;
-    String cause;
-    String protection;
-    String severity;
-    String possibiliy;
-    String level;
-    String suggestion;
+    public String para;
+    public String bias;
+    public String conseq;
+    public String cause;
+    public String protection;
+    public String severity;
+    public String possibiliy;
+    public String level;
+    public String suggestion;
     public static final int attrCount = 9;
     public Entry(String para, String bias, String conseq, String cause,
                  String protection, String severity, String possibiliy,

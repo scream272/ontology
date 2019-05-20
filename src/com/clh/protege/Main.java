@@ -1,4 +1,7 @@
 package com.clh.protege;
+import com.clh.protege.ievent.FinalEvent;
+import com.clh.protege.ievent.InitEvent;
+import com.clh.protege.ievent.MiddleEvent;
 import com.clh.protege.iobject.Attribute;
 import com.clh.protege.iobject.Equipment;
 import com.clh.protege.protege.OwlModel;
@@ -147,19 +150,37 @@ public class Main {
     static private void buildEventObjectOperation(ArrayList<Entry> el) {
         int count = 0;
         for (Entry entry : el) {
-            Log.Debug(entry.getNumAttr(1));
-            String para = entry.getNumAttr(1); // 取出表格第一列的内容
+            // 解析Equipment与Attribute
             Pattern p = Pattern.compile("[A-Za-z]+-[A-Za-z0-9]+/?[A-Za-z0-9]*");
-            Matcher m = p.matcher(para);
-            if (m.find()) {
+            Matcher m = p.matcher(entry.para);
+            String attrname = entry.para;
+            List<Equipment> equilist = new ArrayList<>();
+            while (m.find()) {
                 count = count + 1;
-                if (count > 200)
+                if (count > 50)
                     return;
                 String eqname = m.group();
                 Equipment eq = Equipment.GetEquipment(eqname);
-                String attrname = para.replace(eqname, "");
-                Attribute attr = eq.GetAttribute(attrname);
-                attr.AddBias(entry.getNumAttr(2));
+                equilist.add(eq);
+                attrname = attrname.replace(eqname, "").replace("\\", "");
+            }
+            for (Equipment e: equilist) {
+                Attribute attr = e.GetAttribute(attrname);
+                Attribute.Bias bias = attr.AddBias(entry.bias);
+                /* 解析Event
+                 * InitEvent为 entry.cause
+                 * Middle Event为 Equipment + Attribute + Bias
+                 * Final event为 entry.conseq
+                 */
+                FinalEvent finale = FinalEvent.GetFinalEvent(e, entry.conseq);
+                MiddleEvent middlee = MiddleEvent.GetMiddleEvent(e, attr, bias);
+                InitEvent inite = InitEvent.GetInitEvent(e, entry.cause);
+                inite.middlee = middlee;
+                inite.finale = finale;
+                middlee.inite = inite;
+                middlee.finale = finale;
+                finale.inite = inite;
+                finale.middlee = middlee;
             }
         }
     }

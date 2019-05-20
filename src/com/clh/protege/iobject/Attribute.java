@@ -16,13 +16,16 @@ public class Attribute extends IObject{
         this.biasmap = new HashMap<>();
     }
 
-    public void AddBias(String name) {
+    public Bias AddBias(String name) {
         if (name.contains("高") || name.contains("大")) {
             this.biasmap.put(name, Bias.high);
+            return Bias.high;
         } else if (name.contains("低") || name.contains("小")) {
             this.biasmap.put(name, Bias.low);
+            return Bias.low;
         } else {
             this.biasmap.put(name, Bias.abnormal);
+            return Bias.abnormal;
         }
     }
 }

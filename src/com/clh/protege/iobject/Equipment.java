@@ -2,7 +2,6 @@ package com.clh.protege.iobject;
 
 import com.clh.protege.ievent.FinalEvent;
 import com.clh.protege.ievent.InitEvent;
-import com.clh.protege.ievent.MiddleEvent;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -12,10 +11,10 @@ import java.util.List;
 public class Equipment extends IObject{
     public HashMap<String, Attribute> attributeMap;
     public List<InitEvent> initEventList;
-    public List<MiddleEvent> middleEventList;
+    public List<InitEvent> middleEventList;
     public List<FinalEvent> finalEventList; //代表危险
     public int riskScore;
-    public static HashMap<String, Equipment> allEquipMap = new HashMap<String, Equipment>();
+    public static HashMap<String, Equipment> allEquipMap = new HashMap<>();
     public Equipment(String name) {
         this.name = name;
         this.attributeMap = new HashMap<>();
