@@ -15,11 +15,11 @@ public class InitEvent extends IEvent {
         this.eq = eq;
         this.content = content;
     }
-    public static InitEvent GetInitEvent(Equipment el, String content) {
-        String key = el.name + content;
+    public static InitEvent GetInitEvent(Equipment eq, String content) {
+        String key = eq.name + content;
         if (allInitEventMap.containsKey(key))
             return allInitEventMap.get(key);
-        InitEvent me = new InitEvent(el, content);
+        InitEvent me = new InitEvent(eq, content);
         allInitEventMap.put(key, me);
         return me;
     }

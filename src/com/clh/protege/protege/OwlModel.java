@@ -1,5 +1,6 @@
 package com.clh.protege.protege;
 
+import com.clh.protege.ievent.FinalEvent;
 import com.clh.protege.ievent.InitEvent;
 import com.clh.protege.ievent.MiddleEvent;
 import com.clh.protege.iobject.Attribute;
@@ -56,6 +57,7 @@ public class OwlModel {
             String eqname = eqEntry.getKey();
             Equipment eq = eqEntry.getValue();
             OntClass equipClass = baseOnt.createClass(NS + eqname);
+            eqEntry.getValue().oc = equipClass;
             equipConceptClass.addSubClass(equipClass);
 
             // 遍历当前Equipment的所有Attribute
@@ -78,21 +80,34 @@ public class OwlModel {
         // 遍历所有InitEvent
         for (Map.Entry<String, InitEvent> initEventEntry: InitEvent.allInitEventMap.entrySet()) {
             String initEventName = initEventEntry.getKey();
+            Log.Debug(initEventName);
             OntClass initEventClass = baseOnt.createClass(NS + initEventName);
+            initEventEntry.getValue().oc = initEventClass;
             // 新创建的initEventClass要加到全局的initEventConceptClass
             initEventConceptClass.addSubClass(initEventClass);
             // 将Event与器材关联
-            initEventClass.addDisjointWith(baseOnt.getOntClass(NS + initEventEntry.getValue().eq.name));
+            initEventClass.addDisjointWith(initEventEntry.getValue().eq.oc);
         }
         // 遍历所有MiddleEvent
         for (Map.Entry<String, MiddleEvent> middleEventEntry: MiddleEvent.allMiddleEventMap.entrySet()) {
             String middleEventName = middleEventEntry.getKey();
             OntClass middleEventClass = baseOnt.createClass(NS + middleEventName);
-            // 新创建的initEventClass要加到全局的initEventConceptClass
+            middleEventEntry.getValue().oc = middleEventClass;
+            // 新创建的middleEventClass要加到全局的middleEventConceptClass
             middleEventConceptClass.addSubClass(middleEventClass);
             // 将Event与InitEvent关联
-            Log.Debug(middleEventEntry.getValue().inite.content);
-            middleEventClass.addDisjointWith(baseOnt.getOntClass(NS + middleEventEntry.getValue().inite.content));
+            middleEventClass.addDisjointWith(middleEventEntry.getValue().inite.oc);
+        }
+
+        // 遍历所有FinalEvent
+        for (Map.Entry<String, FinalEvent> finalEventEntry: FinalEvent.allFinalEventMap.entrySet()) {
+            String finalEventName = finalEventEntry.getKey();
+            OntClass finalEventClass = baseOnt.createClass(NS + finalEventName);
+            finalEventEntry.getValue().oc = finalEventClass;
+            // 新创建的finalEventClass要加到全局的finalEventConceptClass
+            finalEventConceptClass.addSubClass(finalEventClass);
+            // 将Event与MiddleEvent关联
+            finalEventClass.addDisjointWith(finalEventEntry.getValue().inite.oc);
         }
         try {
             fileOS = new FileOutputStream(resultPath);
