@@ -1,225 +1,192 @@
 package com.clh.protege;
+
 import com.clh.protege.ievent.FinalEvent;
-import com.clh.protege.ievent.InitEvent;
-import com.clh.protege.ievent.MiddleEvent;
-import com.clh.protege.iobject.Attribute;
-import com.clh.protege.iobject.Equipment;
-import com.clh.protege.protege.OwlModel;
-import com.clh.protege.utils.Entry;
-import com.clh.protege.utils.ExportDoc;
-import com.clh.protege.utils.Log;
-import com.clh.protege.word.TfIdfCounter;
-import com.google.gson.*;
+import com.clh.protege.utils.Display;
 import com.hankcs.hanlp.corpus.tag.Nature;
+import org.apache.jena.ontology.OntClass;
+import org.apache.jena.rdf.model.Property;
+import org.apache.jena.util.iterator.ExtendedIterator;
 
-import java.io.*;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.util.Map;
+import java.util.Scanner;
 
+import static com.clh.protege.MyProcess.om;
+import static com.clh.protege.MyProcess.selectImportantWord;
+import static com.clh.protege.protege.OwlModel.NS;
 
-/**
- *
- * 读取word文档中表格数据，支持doc、docx
- * @author Fise19
- *
- */
 public class Main {
-    static private String rawDataPath = "C:\\Users\\clh\\IdeaProjects\\ontology\\resource\\神华项目报告-中科.doc";
-    static private String jsonPath = "C:\\Users\\clh\\IdeaProjects\\ontology\\data\\phase1_data.json";
-    static private List<String> causeDict;
-    static private JsonParser jsonParser;
-    static private ArrayList<Entry> entryList;
-    static private void testFunctinos() {
-//        List<Term> termList = StandardTokenizer.segment("反应器超温，泄漏，遇点火源引发火灾爆炸，人员中毒伤亡");
-//        System.out.println(termList);
-//
-//        System.out.println(NLPTokenizer.segment("我新造一个词叫幻想乡你能识别并标注正确词性吗？"));
-//        System.out.println(NLPTokenizer.analyze("反应器超温，泄漏，遇点火源引发火灾爆炸，人员中毒伤亡").translateLabels());
-//        TextRankKeyword tk = new TextRankKeyword();
-//        System.out.println(tk.getKeywords(convertRawDataToJson(rawDataPath), 10));
-//        NewWordDiscover wd = new NewWordDiscover();
-//        System.out.println(wd.discover(jsonPath, 3));
-    }
-    static private String convertRawDataToJson(String infilePath, String outfilePath) {
-        try {
-            File outfile = new File(outfilePath);
-            if (outfile.exists()) { // 如果已存在,直接读取
-                FileReader reader = new FileReader(outfile);//定义一个fileReader对象，用来初始化BufferedReader
-                BufferedReader bReader = new BufferedReader(reader);//new一个BufferedReader对象，将文件内容读取到缓存
-                StringBuilder sb = new StringBuilder();//定义一个字符串缓存，将字符串存放缓存中
-                String s = "";
-                while ((s = bReader.readLine()) != null) {//逐行读取文件内容，不读取换行符和末尾的空格
-                    sb.append(s + "\n");//将读取的字符串添加换行符后累加存放在缓存中
-                }
-                bReader.close();
-                String str = sb.toString();
-                return str;
+    static String[] causedict = new String[]{"原因", "由于", "造成", "因", "致", "为", "引"};
+    static String[] topdict = new String[]{"偏差P", "初始原因R", "后果C", "操作O", "索引"};
+    static String[] inducedict = new String[]{"多", "少", "无", "过量", "异常", "早", "晚"};
+    static String[] opdict = new String[]{"怎么", "如何", "要", "能", "需", "办", "措施"};
+    static public boolean isCauseWord(String w) {
+        for (String s: causedict) {
+            if (s.contains(w) || w.contains(s)) {
+                return true;
             }
-            outfile.createNewFile();
-            ExportDoc doc = new ExportDoc();
-            doc.parseDoc(infilePath);
-            Gson gson = new Gson();
-            // 将格式化后的字符串写入文件
-            Writer write = new OutputStreamWriter(new FileOutputStream(outfile), "UTF-8");
-            write.write(gson.toJson(doc.entryList));
-            write.flush();
-            write.close();
-            entryList = doc.entryList;
-            return gson.toJson(doc.entryList);
         }
-        catch (Exception e) {
-            e.printStackTrace();
-        }
-        return null;
+        return false;
     }
-
-    static private String mergeJsonValueIntoString(String data) {
+    static public boolean isInduceWord(String w) {
+        for (String s: inducedict) {
+            if (s.contains(w) || w.contains(s)) {
+                return true;
+            }
+        }
+        return false;
+    }
+    static public boolean isOpWord(String w) {
+        for (String s: opdict) {
+            if (s.contains(w) || w.contains(s)) {
+                return true;
+            }
+        }
+        return false;
+    }
+    static public boolean isTopConcept(String s) {
+        for (String t: topdict) {
+            if (s.equals(t))
+                return true;
+        }
+        return false;
+    }
+    static public boolean like(String a, String b) {
+        String[] a_list = a.split(" ");
+        String[] b_list = b.split(" ");
+        for (String aa: a_list) {
+            if (b.contains(aa))
+                return true;
+        }
+        for (String bb: b_list) {
+            if (a.contains(bb))
+                return true;
+        }
+        return false;
+    }
+    static public String getOntName(OntClass o) {
+        return o.getURI().replace(NS, "");
+    }
+    static public String query(String q) {
+        boolean findp = false;
+        boolean findr = false;
+        boolean findc = false;
+        boolean findo = false;
+        boolean findi = false;
+        if (isOpWord(q)) {
+            findo = true;
+        }
         String result = "";
-        try {
-            JsonArray ja = (JsonArray) jsonParser.parse(data);  //创建jsonObject对象
-            for (JsonElement entry : ja) {
-                JsonObject jo = (JsonObject) entry;
-                result = result + jo.get("para");
-                result = result + jo.get("bias");
-                result = result + jo.get("conseq");
-                result = result + jo.get("cause");
-                result = result + jo.get("protection");
-                result = result + jo.get("severity");
-                result = result + jo.get("possibiliy");
-                result = result + jo.get("level");
-                result = result + jo.get("suggestion");
-                entryList.add(new Entry(jo.get("para").toString(), jo.get("bias").toString(), jo.get("conseq").toString(),
-                                        jo.get("cause").toString(), jo.get("protection").toString(),jo.get("severity").toString(),
-                                        jo.get("possibiliy").toString(), jo.get("level").toString(), jo.get("suggestion").toString()));
-            }
-        } catch (JsonIOException e) {
-            e.printStackTrace();
+        result += "启动问题分析>>\n";
+        List<Map.Entry<String, Double>> ws = selectImportantWord(q, 5, null, false);
+        result += "\n========== 阶段1：从问题中抽取关键词 ==========\n";
+        List<String> querywords = new ArrayList<>();
+        List<String> eventwords = new ArrayList<>();
+        int keywordCount = 0;
+        for (Map.Entry<String, Double> e: ws) {
+            keywordCount += 1;
+            querywords.add(e.getKey());
+            result = result + String.format("关键词 %d：%s\n", keywordCount, e.getKey());
         }
-        return result;
-    }
 
-    static private List<String> selectImportantWord(String data, int size, Nature na) {
-        List<String> result = new ArrayList<>();
-        File wordCache = new File("C:\\Users\\clh\\IdeaProjects\\ontology\\data\\Important_" +
-                                na.toString() +
-                                size);
-        // 如果发现之前有缓存好的结果，则直接取出
-        if (wordCache.exists()) {
-            FileReader reader = null;//定义一个fileReader对象，用来初始化BufferedReader
-            try {
-                reader = new FileReader(wordCache);
-                BufferedReader bReader = new BufferedReader(reader);//new一个BufferedReader对象，将文件内容读取到缓存
-                String s = "";
-                while ((s = bReader.readLine()) != null) {//逐行读取文件内容，不读取换行符和末尾的空格
-                    result.add(s);
+        result += "\n========== 阶段2：对Query Words 基于本体进行概念提取 ==========\n";
+        for (String s: querywords) {
+            result += ">>分析关键词 " + s + "\n";
+            if (isCauseWord(s)) {
+                result += "该词为表示因果关系的连接词\n\n";
+                findr = true;
+                continue;
+            }
+            if (isInduceWord(s)) {
+                result += "该词为表示偏差的引导词\n\n";
+                findp = true;
+                continue;
+            }
+            ExtendedIterator<OntClass> iter = om.baseOnt.listClasses();
+            while (iter.hasNext()) {
+                boolean stopflag = false;
+                OntClass item = iter.next();
+                System.out.println("概念: " + item.getURI().replace(NS, ""));
+                if (like(item.getURI().replace(NS, ""), s)) {
+                    result += "== 找到相关实例/概念，开始递归向上查找 ==\n";
+                    eventwords.add(s);
+                    OntClass classiter = item;
+                    do {
+                        result += String.format("--> %s\n", classiter.getURI().replace(NS, ""));
+                        if (isTopConcept(classiter.getURI().replace(NS, ""))) {
+                            String tmp = classiter.getURI().replace(NS, "");
+                            if (tmp.equals("偏差P"))
+                                findp = true;
+                            if (tmp.equals("初始原因R"))
+                                findr = true;
+                            if (tmp.equals("后果C"))
+                                findc = true;
+                            if (tmp.equals("操作O"))
+                                findo = true;
+                            if (tmp.equals("索引"))
+                                findi = true;
+                            stopflag = true;
+                            break;
+                        }
+                        classiter = classiter.getSuperClass();
+                    } while (classiter != null);
                 }
-                bReader.close();
-                return result;
-            } catch (FileNotFoundException e) {
-                e.printStackTrace();
-            } catch (IOException e) {
-                e.printStackTrace();
+                if (stopflag)
+                    break;
             }
+            result += "\n";
         }
 
-        // 如果没有找到已经缓存的结果，则重新筛选
-        TfIdfCounter tflc = new TfIdfCounter();
-        result = tflc.getKeywordsWithTfIdf(data, size, na);
-        try {
-            wordCache.createNewFile();
-            Writer write = new OutputStreamWriter(new FileOutputStream(wordCache), "UTF-8");
-            for (String r: result) {
-                write.write(r + "\n");
+        result += "\n========== 阶段3：基于本体拓扑的搜索 ==========\n";
+        result += "由阶段2可知，涉及到的顶层概念及其关系：\n";
+        if (findr || findp) {
+            result += "->[初始原因]->[偏差]";
+        }
+        if (findc) {
+            result += "->[后果]";
+        }
+        if (findo) {
+            result += "->[措施]";
+        }
+        result += "\n\n列出所有实例：\n";
+        for (String s: eventwords) {
+            for (Map.Entry<String, FinalEvent> finalEventEntry : FinalEvent.allFinalEventMap.entrySet()) {
+                if (like(s, finalEventEntry.getKey())) {
+                    if (findp || findr) {
+                        result += String.format("[初始原因]：%s\n", finalEventEntry.getValue().inite.content);
+                        result += String.format("--[初始原因类型]：%s\n", finalEventEntry.getValue().inite.type);
+                        result += String.format("[偏差]：%s\n", finalEventEntry.getValue().middlee.content);
+                    }
+                    result += String.format("[后果]：%s\n", finalEventEntry.getKey());
+                    result += String.format("--[后果类型]：%s\n", finalEventEntry.getValue().type);
+                    if (findo) {
+                        result += String.format("[解决措施]：%s\n", finalEventEntry.getValue().op.name);
+                    }
+                    result += "\n";
+                }
             }
-            write.flush();
-            write.close();
-        } catch (IOException e) {
-            e.printStackTrace();
         }
         return result;
     }
-
-    static private void buildProtegeOwlFromEntryList(ArrayList<Entry> el, String resultPath) {
-        OwlModel om = new OwlModel();
-        om.convertClassToOwl(resultPath);
-    }
-
-    static private void buildEventObjectOperation(ArrayList<Entry> el) {
-        int count = 0;
-        for (Entry entry : el) {
-            // 解析Equipment与Attribute
-            Pattern p = Pattern.compile("[A-Za-z]+-[A-Za-z0-9]+/?[A-Za-z0-9]*");
-            Matcher m = p.matcher(entry.para);
-            String attrname = entry.para;
-            List<Equipment> equilist = new ArrayList<>();
-            while (m.find()) {
-                count = count + 1;
-                if (count > 50)
-                    return;
-                String eqname = m.group();
-                Equipment eq = Equipment.GetEquipment(eqname);
-                equilist.add(eq);
-                attrname = attrname.replace(eqname, "").replace("\\", "");
-            }
-            for (Equipment e: equilist) {
-                Attribute attr = e.GetAttribute(attrname);
-                Attribute.Bias bias = attr.AddBias(entry.bias);
-                /* 解析Event
-                 * InitEvent为 entry.cause
-                 * Middle Event为 Equipment + Attribute + Bias
-                 * Final event为 entry.conseq
-                 */
-                FinalEvent finale = FinalEvent.GetFinalEvent(e, entry.conseq);
-                MiddleEvent middlee = MiddleEvent.GetMiddleEvent(e, attr, bias);
-                InitEvent inite = InitEvent.GetInitEvent(e, entry.cause);
-                inite.middlee = middlee;
-                inite.finale = finale;
-                middlee.inite = inite;
-                middlee.finale = finale;
-                finale.inite = inite;
-                finale.middlee = middlee;
-            }
+    static private void queryEngine() {
+        // 显示UI界面
+        Display d = new Display();
+        d.showFrame();
+        //创建Scanner对象
+        //System.in表示标准化输出，也就是键盘输出
+        Scanner sc = new Scanner(System.in);
+        //利用hasNextXXX()判断是否还有下一输入项
+        while (sc.hasNext()) {
+            //利用nextXXX()方法输出内容
+            String str = sc.next();
+            System.out.println(str);
         }
-    }
-    static private void envInit() {
-        jsonParser = new JsonParser();  //创建json解析器
-        causeDict = Arrays.asList("造成", "引起", "引发");
-        entryList = new ArrayList<>();
-        Log.loglevel = 3;
     }
     public static void main(String[] args) {
-        /* 构造本体的作用：将文档进行结构化抽象，便于安全信息的传递、共享、查询
-        *  1. 对文档中出现的关键实验器材，进行全面的危险系数评估（从不当操作可能引发的后果来分析）；
-        *  2. 为实际生产过程中可能出现的危害，提供自动化故障处理建议；
-        *  3. 汇总生产过程中需要关注的事项，用于指导生产 */
-        envInit();
-        // 步骤1：首先将原始的文档进行处理，将文档中的表格转换为json文件
-        String dataJson = convertRawDataToJson(rawDataPath, jsonPath);
-
-        // 步骤2：将json的value值合并成一个总的字符串，方便提取关键词
-        String dataStr = mergeJsonValueIntoString(dataJson);
-
-        // 步骤3：关键词抽取，按照词性来进行
-        List<String> vWords = selectImportantWord(dataStr, 100, Nature.v);
-        List<String> nWords = selectImportantWord(dataStr, 1000, Nature.n);
-        System.out.println(vWords);
-        System.out.println(nWords);
-
-        // 步骤4：分析json文档，构造Event、iobject、IOperation三元表达
-        buildEventObjectOperation(entryList);
-
-        // 步骤5：利用步骤3与步骤4的输出结果建立关系图
-
-        // 步骤6：在关系图的基础上建立“后果”的倒排索引
-
-        // 步骤7：利用关系图与倒排索引进行本体构建
-        buildProtegeOwlFromEntryList(entryList, "entrylist.owl");
-        // 步骤8：本体的使用
-        //file_process();
-        testFunctinos();
+        MyProcess p = new MyProcess();
+        MyProcess.run();
+        //        // 步骤8：本体的使用
+        queryEngine();
     }
-
 }

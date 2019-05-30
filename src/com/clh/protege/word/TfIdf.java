@@ -58,7 +58,7 @@ public class TfIdf
         {
             Double f = tf.get(term);
             if (f == null) f = 0.0;
-            tf.put(term, f + 1);
+            tf.put(term, f + 1.0 / document.size());
         }
         if (type != TfType.NATURAL)
         {

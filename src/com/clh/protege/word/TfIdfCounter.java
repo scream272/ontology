@@ -59,16 +59,21 @@ public class TfIdfCounter extends KeywordExtractor
     @Override
     public List<String> getKeywords(List<Term> termList, int size)
     {
-        return getKeywordsWithTfIdf(termList, size);
+        List<String> result = new ArrayList<>();
+        List<Map.Entry<String, Double>> tpn = getKeywordsWithTfIdf(termList, size);
+        for (int i = 0; i < tpn.size(); i++) {
+            result.add(tpn.get(i).getKey());
+        }
+        return result;
     }
 
-    public List<String> getKeywordsWithTfIdf(String document, int size, Nature na)
+    public List<Map.Entry<String, Double>> getKeywordsWithTfIdf(String document, int size, Nature na)
     {
         return getKeywordsWithTfIdf(preprocess(document, na), size);
     }
 
 
-    public List<String> getKeywordsWithTfIdf(List<Term> termList, int size)
+    public List<Map.Entry<String, Double>> getKeywordsWithTfIdf(List<Term> termList, int size)
     {
         List<String> result = new ArrayList<>();
         if (idf == null)
@@ -76,10 +81,10 @@ public class TfIdfCounter extends KeywordExtractor
 
         Map<String, Double> tfIdf = TfIdf.tfIdf(TfIdf.tf(convert(termList)), idf);
         List<Map.Entry<String, Double>> tpn = topN(tfIdf, size);
-        for (int i = 0; i < tpn.size(); i++) {
-            result.add(tpn.get(i).getKey());
-        }
-        return result;
+//        for (int i = 0; i < tpn.size(); i++) {
+//            result.add(tpn.get(i).getKey());
+//        }
+        return tpn;
     }
 
     public void add(Object id, List<Term> termList)
@@ -112,7 +117,7 @@ public class TfIdfCounter extends KeywordExtractor
         {
             Term t = listIterator.next();
             // 如果Term属于停用词或者Term仅仅是一个字符，则删除
-            if (!shouldInclude(t) || t.word.length() == 1 || t.nature != na)
+            if (!shouldInclude(t) || t.word.length() == 1 || (na != null && t.nature != na))
                 listIterator.remove();
         }
     }

@@ -9,48 +9,83 @@ import com.clh.protege.utils.Log;
 import org.apache.jena.ontology.OntClass;
 import org.apache.jena.ontology.OntModel;
 import org.apache.jena.ontology.OntModelSpec;
+import org.apache.jena.ontology.OntProperty;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.Property;
 
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import static com.clh.protege.utils.Log.*;
 
 public class OwlModel {
     private static final String SOURCE = "http://clh/ontology/chemistry";
-    private static final String NS = SOURCE + "#";
+    public static final String NS = SOURCE + "#";
     private OntModelSpec ontModelSpec;
-    private OntModel baseOnt;
-    public static HashMap<String, OntClass> allOntClassMap = new HashMap<String, OntClass>();
+    public OntModel baseOnt;
 
     public void convertClassToOwl(String resultPath) {
         FileOutputStream fileOS = null;
+        List<String> indection = new ArrayList<>();
+        indection.add("无");
+        indection.add("空白");
+        indection.add("多");
+        indection.add("过量");
+        indection.add("少");
+        indection.add("减量");
+        indection.add("伴随");
+        indection.add("部分");
+        indection.add("相反");
+        indection.add("异常");
+        indection.add("早");
+        indection.add("晚");
+        indection.add("先");
+        indection.add("后");
         // 创建顶层Class
-        OntClass ObjectClass = baseOnt.createClass(NS + "Object");
-        OntClass EventClass = baseOnt.createClass(NS + "Event");
-        OntClass OperationClass = baseOnt.createClass(NS + "Operation");
+        OntClass IndexClass = baseOnt.createClass(NS + "索引");
+        OntClass equipConceptClass = baseOnt.createClass(NS + "器材");
+        IndexClass.addSubClass(equipConceptClass);
+        OntClass attributeConceptClass = baseOnt.createClass(NS + "属性");
+        IndexClass.addSubClass(attributeConceptClass);
 
-        OntClass equipConceptClass = baseOnt.createClass(NS + "Equipment");
-        ObjectClass.addSubClass(equipConceptClass);
-        OntClass attributeConceptClass = baseOnt.createClass(NS + "Attribute");
-        ObjectClass.addSubClass(attributeConceptClass);
-        OntClass peopleConceptClass = baseOnt.createClass(NS + "People");
-        ObjectClass.addSubClass(peopleConceptClass);
-
-        OntClass initEventConceptClass = baseOnt.createClass(NS + "InitEvent");
-        EventClass.addSubClass(initEventConceptClass);
-        OntClass middleEventConceptClass = baseOnt.createClass(NS + "MiddleEvent");
-        EventClass.addSubClass(middleEventConceptClass);
-        OntClass finalEventConceptClass = baseOnt.createClass(NS + "FinalEvent");
-        EventClass.addSubClass(finalEventConceptClass);
-
-        OntClass EmerTreatConceptClass = baseOnt.createClass(NS + "EmergencyTreatment");
+        OntClass OperationClass = baseOnt.createClass(NS + "操作O");
+        OntClass EmerTreatConceptClass = baseOnt.createClass(NS + "补救操作");
         OperationClass.addSubClass(EmerTreatConceptClass);
-        OntClass PrecautionConceptClass = baseOnt.createClass(NS + "Precaution");
+        OntClass PrecautionConceptClass = baseOnt.createClass(NS + "预防类操作");
         OperationClass.addSubClass(PrecautionConceptClass);
+
+
+        OntClass initEventConceptClass = baseOnt.createClass(NS + "初始原因R");
+        OntClass R1 = baseOnt.createClass(NS + "人员失误");
+        initEventConceptClass.addSubClass(R1);
+        OntClass R2 = baseOnt.createClass(NS + "器材异常");
+        initEventConceptClass.addSubClass(R2);
+        OntClass R3 = baseOnt.createClass(NS + "外部异常");
+        initEventConceptClass.addSubClass(R3);
+
+        OntClass middleEventConceptClass = baseOnt.createClass(NS + "偏差P");
+
+        OntClass finalEventConceptClass = baseOnt.createClass(NS + "后果C");
+        OntClass C1 = baseOnt.createClass(NS + "人员损伤");
+        finalEventConceptClass.addSubClass(C1);
+
+        OntClass C2 = baseOnt.createClass(NS + "器材损坏");
+        finalEventConceptClass.addSubClass(C2);
+        OntClass c2baozha = baseOnt.createClass(NS + "器材爆炸");
+        C2.addSubClass(c2baozha);
+        OntClass c2huozai = baseOnt.createClass(NS + "火灾");
+        C2.addSubClass(c2huozai);
+        OntClass c2xielou = baseOnt.createClass(NS + "泄露");
+        C2.addSubClass(c2xielou);
+        OntClass c2qita = baseOnt.createClass(NS + "其他");
+        C2.addSubClass(c2qita);
+
+        OntClass C3 = baseOnt.createClass(NS + "过程终止");
+        finalEventConceptClass.addSubClass(C3);
 
         // 遍历所有的仪器设备
         for (Map.Entry<String, Equipment> eqEntry : Equipment.allEquipMap.entrySet()) {
@@ -82,11 +117,31 @@ public class OwlModel {
             String initEventName = initEventEntry.getKey();
             Log.Debug(initEventName);
             OntClass initEventClass = baseOnt.createClass(NS + initEventName);
+            OntProperty riskProperty = baseOnt.createOntProperty(NS + "风险");
+            initEventClass.addProperty(riskProperty, initEventEntry.getValue().riskScore);
+//            initEventClass.addLabel(initEventEntry.getValue().riskScore, "风险");
             initEventEntry.getValue().oc = initEventClass;
-            // 新创建的initEventClass要加到全局的initEventConceptClass
-            initEventConceptClass.addSubClass(initEventClass);
+
+            boolean flag = false;
+            for (int i = 0; i < indection.size(); i++) {
+                if (initEventName.contains(indection.get(i))) {
+                    flag = true;
+                    break;
+                }
+            }
+            if (initEventName.contains("人") || initEventName.contains("操作")) {
+                R1.addSubClass(initEventClass);
+                initEventEntry.getValue().type = R1.getLocalName();
+            } else if (flag) {
+                R2.addSubClass(initEventClass);
+                initEventEntry.getValue().type = R2.getLocalName();
+            } else {
+                R3.addSubClass(initEventClass);
+                initEventEntry.getValue().type = R3.getLocalName();
+            }
+
             // 将Event与器材关联
-            initEventClass.addDisjointWith(initEventEntry.getValue().eq.oc);
+            initEventClass.addIsDefinedBy(initEventEntry.getValue().eq.oc);
         }
         // 遍历所有MiddleEvent
         for (Map.Entry<String, MiddleEvent> middleEventEntry: MiddleEvent.allMiddleEventMap.entrySet()) {
@@ -96,7 +151,7 @@ public class OwlModel {
             // 新创建的middleEventClass要加到全局的middleEventConceptClass
             middleEventConceptClass.addSubClass(middleEventClass);
             // 将Event与InitEvent关联
-            middleEventClass.addDisjointWith(middleEventEntry.getValue().inite.oc);
+            middleEventClass.addIsDefinedBy(middleEventEntry.getValue().inite.oc);
         }
 
         // 遍历所有FinalEvent
@@ -104,10 +159,31 @@ public class OwlModel {
             String finalEventName = finalEventEntry.getKey();
             OntClass finalEventClass = baseOnt.createClass(NS + finalEventName);
             finalEventEntry.getValue().oc = finalEventClass;
-            // 新创建的finalEventClass要加到全局的finalEventConceptClass
-            finalEventConceptClass.addSubClass(finalEventClass);
+            if (finalEventName.contains("人") || finalEventName.contains("伤")) {
+                finalEventEntry.getValue().type = C1.getLocalName();
+                C1.addSubClass(finalEventClass);
+            } else if (finalEventName.contains("坏") || finalEventName.contains("爆")) {
+                if (finalEventName.contains("爆")) {
+                    finalEventEntry.getValue().type = c2baozha.getLocalName();
+                    c2baozha.addSubClass(finalEventClass);
+                } else if (finalEventName.contains("火")) {
+                    finalEventEntry.getValue().type = c2huozai.getLocalName();
+                    c2huozai.addSubClass(finalEventClass);
+                } else if (finalEventName.contains("泄")) {
+                    finalEventEntry.getValue().type = c2xielou.getLocalName();
+                    c2xielou.addSubClass(finalEventClass);
+                } else {
+                    finalEventEntry.getValue().type = c2qita.getLocalName();
+                    c2qita.addSubClass(finalEventClass);
+                }
+            } else {
+                C3.addSubClass(finalEventClass);
+            }
             // 将Event与MiddleEvent关联
-            finalEventClass.addDisjointWith(finalEventEntry.getValue().inite.oc);
+            finalEventClass.addIsDefinedBy(finalEventEntry.getValue().inite.oc);
+            OntClass opClass = baseOnt.createClass(NS + finalEventEntry.getValue().op.name);
+            PrecautionConceptClass.addSubClass(opClass);
+            finalEventClass.addSubClass(opClass);
         }
         try {
             fileOS = new FileOutputStream(resultPath);

@@ -9,6 +9,8 @@ public class InitEvent extends IEvent {
     public MiddleEvent middlee;
     public FinalEvent finale;
     public String content;
+    public String riskScore;
+    public String type;
 
     public static HashMap<String, InitEvent> allInitEventMap = new HashMap<>();
     public InitEvent(Equipment eq, String content) {

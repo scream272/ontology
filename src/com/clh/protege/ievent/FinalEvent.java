@@ -1,6 +1,7 @@
 package com.clh.protege.ievent;
 
 import com.clh.protege.iobject.Equipment;
+import com.clh.protege.ioperation.IOperation;
 
 import java.util.HashMap;
 
@@ -9,6 +10,8 @@ public class FinalEvent extends IEvent{
     public MiddleEvent middlee;
     public Equipment eq;
     public String content;
+    public IOperation op;
+    public String type;
 
     public static HashMap<String, FinalEvent> allFinalEventMap = new HashMap<>();
     public FinalEvent(Equipment eq, String content) {
